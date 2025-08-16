@@ -1,34 +1,33 @@
 import axios from "axios";
-import type { Movie } from "../types/movie";
+import type { Note } from "../types/note";
 
-export interface MovieSearchResponse {
-    page: number;
-    results: Movie[];
-    total_results: number;
-    total_pages: number;
+const NOTEHUB_KEY = import.meta.env.VITE_NOTEHUB_KEY;
+const LINK = 'https://notehub-public.goit.study/api/notes';
+
+export interface NoteResponse {
+    notes: Note[];
+    totalPages: number;
 }
 
-const TMDB_BEARER_TOKEN = import.meta.env.VITE_TMDB_BEARER_TOKEN; // Bearer токен
-const link = "https://api.themoviedb.org/3/search/movie";
-
-export async function getMovies({
-    query,
-    page = 1,
-}: {
-    query: string;
-    page?: number;
-}): Promise<MovieSearchResponse> {
-    const response = await axios.get<MovieSearchResponse>(link, {
-        params: {
-            query,
-            include_adult: false,
-            language: "en-US",
-            page,
-        },
-        headers: {
-            Authorization: `Bearer ${TMDB_BEARER_TOKEN}`, // Важливо!
-        },
-    });
-
+export async function fetchNotes (page: number, userQuery: string): Promise<NoteResponse> {
+    
+    const response = await axios.get<NoteResponse>(LINK,
+        {
+            params: {
+                search: userQuery,
+                page: page,
+                perPage: 12,
+            },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${NOTEHUB_KEY}`,
+            }
+        });
     return response.data;
 }
+
+// export async function createNote() {
+    
+// }
+
+// export async function deleteNote () {}
