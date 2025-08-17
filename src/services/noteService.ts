@@ -1,27 +1,57 @@
-import SearchBox from '../SearchBox/SearchBox';
-import css from './App.module.css';
-import { useState, useEffect } from 'react';
-import { useDebounce } from 'use-debounce';
-import { fetchNotes } from '../../services/noteService';
+import axios from 'axios';
+import type { Note, NoteTag } from '../types/note';
 
-export default function App() {
-    const [searchText, setSearchText] = useState('');
-    const [debouncedText] = useDebounce(searchText, 500);
+const API_URL = 'https://notehub-public.goit.study/api/notes';
 
-    useEffect(() => {
-        if (debouncedText.trim() !== '') {
-            fetchNotes(1, debouncedText).then(data => {
-                console.log(data);
-            });
-        }
-    }, [debouncedText]);
-    return (
-        <div className= { css.app } >
-        <header className={ css.toolbar }>
-            <SearchBox searchText={ searchText } onUpdate = { setSearchText } />
-                {/* Пагінація */ }
-    {/* Кнопка створення нотатки */ }
-    </header>
-        </div>
-  );
+const axiosInstance = axios.create({
+    baseURL: API_URL,
+    headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_NOTEHUB_TOKEN}`,
+    },
+});
+
+export interface FetchNotesParams {
+    page?: number;
+    perPage?: number;
+    search?: string;
 }
+
+export interface FetchNotesResponse {
+    notes: Note[];
+    totalPages: number;
+    totalNotes: number;
+}
+
+export interface CreateNoteParams {
+    title: string;
+    content: string;
+    tag: NoteTag;
+}
+
+export interface CreateNoteResponse {
+    note: Note;
+}
+
+export interface DeleteNoteResponse {
+    note: Note;
+}
+
+export const fetchNotes = async (
+    params: FetchNotesParams
+): Promise<FetchNotesResponse> => {
+    const response = await axiosInstance.get<FetchNotesResponse>('', { params });
+    return response.data;
+};
+
+export const createNote = async (
+    data: CreateNoteParams
+): Promise<CreateNoteResponse> => {
+    const response = await axiosInstance.post<CreateNoteResponse>('', data);
+    return response.data;
+};
+
+export const deleteNote = async (id: string): Promise<DeleteNoteResponse> => {
+    const response = await axiosInstance.delete<DeleteNoteResponse>(`/${id}`);
+    return response.data;
+};
