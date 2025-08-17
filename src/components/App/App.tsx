@@ -1,56 +1,65 @@
-import { useState } from "react";
-import css from "./App.module.css";
-import { useDebounce } from "use-debounce";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { fetchNotes } from "../../services/noteService";
-import NoteList from "../NoteList/NoteList";
-import Pagination from "../Pagination/Pagination";
-import SearchBox from "../SearchBox/SearchBox";
-import Modal from "../Modal/Modal";
-import NoteForm from "../NoteForm/NoteForm";
-import Loader from "../Loader/Loader";
+import React, { useState } from "react";
+import { useQuery } from "react-query";
+import NoteForm from "../NoteForm";
+import Pagination from "../Pagination";
 
-export default function App() {
-    const [search, setSearch] = useState("");
-    const [debouncedSearch] = useDebounce(search, 500);
+interface Note {
+    id: number;
+    title: string;
+    content: string;
+}
+
+interface NotesResponse {
+    notes: Note[];
+    totalPages: number;
+}
+
+// Функция для получения заметок с сервера
+const fetchNotes = async (page: number): Promise<NotesResponse> => {
+    const res = await fetch(`/api/notes?page=${page}`);
+    if (!res.ok) throw new Error("Failed to fetch notes");
+    return res.json();
+};
+
+const App: React.FC = () => {
     const [page, setPage] = useState(1);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ["notes", page, debouncedSearch],
-        queryFn: () => fetchNotes({ page, perPage: 12, search: debouncedSearch }),
-        placeholderData: keepPreviousData,
-    });
+    const { data, isLoading, error } = useQuery<NotesResponse>(
+        ["notes", page],
+        () => fetchNotes(page),
+        { keepPreviousData: true }
+    );
 
-    const handleSearchChange = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
+    const handleCloseForm = () => setIsFormOpen(false);
 
-    const handleNoteCreated = () => setIsModalOpen(false);
+    if (isLoading) return <div>Loading...</div>;
+    if (error) return <div>Error loading notes</div>;
 
     return (
-        <div className={css.app}>
-            <header className={css.toolbar}>
-                <SearchBox value={search} onChange={handleSearchChange} />
-                {data && data.totalPages > 1 && (
-                    <Pagination page={page} setPage={setPage} totalPages={data.totalPages} />
-                )}
-                <button className={css.button} onClick={() => setIsModalOpen(true)}>
-                    Create note +
-                </button>
-            </header>
+        <div>
+            <button onClick={() => setIsFormOpen(true)}>Add Note</button>
 
-            {isLoading && <Loader />}
-            {isError && <p>Error loading...</p>}
+            {isFormOpen && <NoteForm onClose={handleCloseForm} />}
 
-            {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
+            <ul>
+                {data?.notes.map((note) => (
+                    <li key={note.id}>
+                        <h3>{note.title}</h3>
+                        <p>{note.content}</p>
+                    </li>
+                ))}
+            </ul>
 
-            {isModalOpen && (
-                <Modal onClose={() => setIsModalOpen(false)}>
-                    <NoteForm onSuccess={handleNoteCreated} />
-                </Modal>
+            {data && (
+                <Pagination
+                    currentPage={page}
+                    onPageChange={setPage}
+                    totalPages={data.totalPages}
+                />
             )}
         </div>
     );
-}
+};
+
+export default App;

@@ -15,43 +15,21 @@ export interface FetchNotesParams {
     page?: number;
     perPage?: number;
     search?: string;
+    tag?: NoteTag;
+    sortBy?: string;
 }
 
-export interface FetchNotesResponse {
-    notes: Note[];
-    totalPages: number;
-    totalNotes: number;
-}
-
-export interface CreateNoteParams {
-    title: string;
-    content: string;
-    tag: NoteTag;
-}
-
-export interface CreateNoteResponse {
-    note: Note;
-}
-
-export interface DeleteNoteResponse {
-    note: Note;
-}
-
-export const fetchNotes = async (
-    params: FetchNotesParams
-): Promise<FetchNotesResponse> => {
-    const response = await axiosInstance.get<FetchNotesResponse>('', { params });
+export const fetchNotes = async (params?: FetchNotesParams): Promise<Note[]> => {
+    const response = await axiosInstance.get<Note[]>('', { params });
     return response.data;
 };
 
-export const createNote = async (
-    data: CreateNoteParams
-): Promise<CreateNoteResponse> => {
-    const response = await axiosInstance.post<CreateNoteResponse>('', data);
+export const createNote = async (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Promise<Note> => {
+    const response = await axiosInstance.post<Note>('', data);
     return response.data;
 };
 
-export const deleteNote = async (id: string): Promise<DeleteNoteResponse> => {
-    const response = await axiosInstance.delete<DeleteNoteResponse>(`/${id}`);
+export const deleteNote = async (id: string): Promise<Note> => {
+    const response = await axiosInstance.delete<Note>(`/${id}`);
     return response.data;
 };

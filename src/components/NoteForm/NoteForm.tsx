@@ -1,56 +1,105 @@
 import css from "./NoteForm.module.css";
-import React from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNote } from "../../services/noteService";
+import type { Note, NoteTag } from "../../types/note";
 
 interface NoteFormProps {
-    onSuccess: () => void;
+    onClose: () => void;
 }
 
-export default function NoteForm({ onSuccess }: NoteFormProps) {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        // Здесь логика создания заметки
-        // После успешного создания:
-        onSuccess();
-    };
+interface NoteFormValues {
+    title: string;
+    content: string;
+    tag: NoteTag;
+}
+
+export default function NoteForm({ onClose }: NoteFormProps) {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation<Note, Error, NoteFormValues>({
+        mutationFn: createNote,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["notes"] });
+            onClose();
+        },
+    });
+
+    const formik = useFormik<NoteFormValues>({
+        initialValues: {
+            title: "",
+            content: "",
+            tag: "general",
+        },
+        validationSchema: Yup.object({
+            title: Yup.string()
+                .max(50, "Слишком длинный заголовок")
+                .required("Обязательное поле"),
+            content: Yup.string()
+                .required("Обязательное поле"),
+            tag: Yup.string()
+                .required("Обязательное поле"),
+        }),
+        onSubmit: (values) => {
+            mutation.mutate(values);
+        },
+    });
 
     return (
-        <form className={css.form} onSubmit={handleSubmit}>
-            <div className={css.formGroup}>
-                <label htmlFor="title">Title</label>
-                <input id="title" type="text" name="title" className={css.input} />
-                <span className={css.error} />
+        <form className={css.form} onSubmit={formik.handleSubmit}>
+            <div className={css.field}>
+                <label htmlFor="title">Заголовок</label>
+                <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.title}
+                />
+                {formik.touched.title && formik.errors.title ? (
+                    <div className={css.error}>{formik.errors.title}</div>
+                ) : null}
             </div>
 
-            <div className={css.formGroup}>
-                <label htmlFor="content">Content</label>
+            <div className={css.field}>
+                <label htmlFor="content">Содержание</label>
                 <textarea
                     id="content"
                     name="content"
-                    rows={8}
-                    className={css.textarea}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.content}
                 />
-                <span className={css.error} />
+                {formik.touched.content && formik.errors.content ? (
+                    <div className={css.error}>{formik.errors.content}</div>
+                ) : null}
             </div>
 
-            <div className={css.formGroup}>
-                <label htmlFor="tag">Tag</label>
-                <select id="tag" name="tag" className={css.select}>
-                    <option value="Todo">Todo</option>
-                    <option value="Work">Work</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Meeting">Meeting</option>
-                    <option value="Shopping">Shopping</option>
+            <div className={css.field}>
+                <label htmlFor="tag">Тег</label>
+                <select
+                    id="tag"
+                    name="tag"
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    value={formik.values.tag}
+                >
+                    <option value="general">General</option>
+                    <option value="work">Work</option>
+                    <option value="personal">Personal</option>
                 </select>
-                <span className={css.error} />
+                {formik.touched.tag && formik.errors.tag ? (
+                    <div className={css.error}>{formik.errors.tag}</div>
+                ) : null}
             </div>
 
             <div className={css.actions}>
-                <button type="button" className={css.cancelButton}>
-                    Cancel
+                <button type="submit" disabled={mutation.isLoading}>
+                    {mutation.isLoading ? "Сохраняем..." : "Сохранить"}
                 </button>
-                <button type="submit" className={css.submitButton} disabled={false}>
-                    Create note
-                </button>
+                <button type="button" onClick={onClose}>Отмена</button>
             </div>
         </form>
     );
