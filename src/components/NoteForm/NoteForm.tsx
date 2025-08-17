@@ -1,75 +1,47 @@
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
-import css from './NoteForm.module.css';
+// src/components/NoteForm/NoteForm.tsx
+import React, { useState } from 'react';
 import { type NoteTag } from '../../types/note';
-import { createNote } from '../../services/noteService';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-interface NoteFormProps {
-    onSuccess: () => void;
+export interface NoteFormProps {
+    onClose: () => void;
 }
 
-const tags: NoteTag[] = ['Todo', 'Work', 'Personal', 'Meeting', 'Shopping'];
+const NoteForm: React.FC<NoteFormProps> = ({ onClose }) => {
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [tag, setTag] = useState<NoteTag>('Todo');
 
-const validationSchema = Yup.object({
-    title: Yup.string().min(3).max(50).required('Title is required'),
-    content: Yup.string().max(500, 'Max 500 characters'),
-    tag: Yup.mixed<NoteTag>().oneOf(tags).required('Tag is required'),
-});
-
-export default function NoteForm({ onSuccess }: NoteFormProps) {
-    const queryClient = useQueryClient();
-    const mutation = useMutation({
-        mutationFn: createNote,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['notes'] });
-            onSuccess();
-        },
-    });
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // логіка створення нотатки
+        console.log({ title, content, tag });
+        onClose();
+    };
 
     return (
-        <Formik
-            initialValues={{ title: '', content: '', tag: 'Todo' }}
-            validationSchema={validationSchema}
-            onSubmit={(values, { setSubmitting }) => {
-                mutation.mutate({
-                    ...values,
-                    tag: values.tag as NoteTag,
-                });
-                setSubmitting(false);
-            }}
-        >
-            {({ isSubmitting }) => (
-                <Form className={css.form}>
-                    <div className={css.formGroup}>
-                        <label htmlFor="title">Title</label>
-                        <Field id="title" name="title" className={css.input} />
-                        <ErrorMessage name="title" component="span" className={css.error} />
-                    </div>
-                    <div className={css.formGroup}>
-                        <label htmlFor="content">Content</label>
-                        <Field as="textarea" id="content" name="content" rows={8} className={css.textarea} />
-                        <ErrorMessage name="content" component="span" className={css.error} />
-                    </div>
-                    <div className={css.formGroup}>
-                        <label htmlFor="tag">Tag</label>
-                        <Field as="select" id="tag" name="tag" className={css.select}>
-                            {tags.map(tag => (
-                                <option key={tag} value={tag}>{tag}</option>
-                            ))}
-                        </Field>
-                        <ErrorMessage name="tag" component="span" className={css.error} />
-                    </div>
-                    <div className={css.actions}>
-                        <button type="button" className={css.cancelButton} onClick={onSuccess}>
-                            Cancel
-                        </button>
-                        <button type="submit" className={css.submitButton} disabled={isSubmitting}>
-                            Create note
-                        </button>
-                    </div>
-                </Form>
-            )}
-        </Formik>
+        <form onSubmit={handleSubmit}>
+            <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Title"
+            />
+            <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Content"
+            />
+            <select value={tag} onChange={(e) => setTag(e.target.value as NoteTag)}>
+                <option value="Todo">Todo</option>
+                <option value="Work">Work</option>
+                <option value="Personal">Personal</option>
+                <option value="Meeting">Meeting</option>
+                <option value="Shopping">Shopping</option>
+            </select>
+            <button type="submit">Create Note</button>
+            <button type="button" onClick={onClose}>Close</button>
+        </form>
     );
-}
+};
+
+export default NoteForm;
