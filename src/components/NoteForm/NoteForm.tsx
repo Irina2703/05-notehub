@@ -39,12 +39,11 @@ export default function NoteForm() {
                 <button
                     type="submit"
                     className={css.submitButton}
-                    disabled=false
+                    disabled={false}  {/* <-- исправлено */}
                 >
                     Create note
                 </button>
             </div>
         </form>
-
-    )
+    );
 }
