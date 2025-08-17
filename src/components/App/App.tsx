@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "react-query";
-import NoteForm from "../NoteForm";
-import Pagination from "../Pagination";
+import NoteForm from '../NoteForm/NoteForm';
+import Pagination from '../Pagination/Pagination';
 
 interface Note {
     id: number;
