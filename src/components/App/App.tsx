@@ -3,7 +3,7 @@ import SearchBox from '../SearchBox/SearchBox';
 import css from './App.module.css';
 import { useState, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
-import { fetchNotes } from '../../services/noteService';
+import { fetchNotes } from '../../services/movieService';
 
 export default function App() {
     const [searchText, setSearchText] = useState('');
