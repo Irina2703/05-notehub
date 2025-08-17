@@ -9,8 +9,8 @@ export interface NoteResponse {
     totalPages: number;
 }
 
-export async function fetchNotes (page: number, userQuery: string): Promise<NoteResponse> {
-    
+export async function fetchNotes(page: number, userQuery: string): Promise<NoteResponse> {
+
     const response = await axios.get<NoteResponse>(LINK,
         {
             params: {
@@ -26,8 +26,3 @@ export async function fetchNotes (page: number, userQuery: string): Promise<Note
     return response.data;
 }
 
-// export async function createNote() {
-    
-// }
-
-// export async function deleteNote () {}

@@ -1,3 +1,4 @@
+// Make sure the path is correct and the file exists
 import SearchBox from '../SearchBox/SearchBox';
 import css from './App.module.css';
 import { useState, useEffect } from 'react';
