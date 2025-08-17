@@ -1,106 +1,75 @@
-import css from "./NoteForm.module.css";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createNote } from "../../services/noteService";
-import type { Note, NoteTag } from "../../types/note";
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import css from './NoteForm.module.css';
+import { type NoteTag } from '../../types/note';
+import { createNote } from '../../services/noteService';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface NoteFormProps {
-    onClose: () => void;
+    onSuccess: () => void;
 }
 
-interface NoteFormValues {
-    title: string;
-    content: string;
-    tag: NoteTag;
-}
+const tags: NoteTag[] = ['Todo', 'Work', 'Personal', 'Meeting', 'Shopping'];
 
-export default function NoteForm({ onClose }: NoteFormProps) {
+const validationSchema = Yup.object({
+    title: Yup.string().min(3).max(50).required('Title is required'),
+    content: Yup.string().max(500, 'Max 500 characters'),
+    tag: Yup.mixed<NoteTag>().oneOf(tags).required('Tag is required'),
+});
+
+export default function NoteForm({ onSuccess }: NoteFormProps) {
     const queryClient = useQueryClient();
-
-    const mutation = useMutation<Note, Error, NoteFormValues>({
+    const mutation = useMutation({
         mutationFn: createNote,
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["notes"] });
-            onClose();
-        },
-    });
-
-    const formik = useFormik<NoteFormValues>({
-        initialValues: {
-            title: "",
-            content: "",
-            tag: "general",
-        },
-        validationSchema: Yup.object({
-            title: Yup.string()
-                .max(50, "Слишком длинный заголовок")
-                .required("Обязательное поле"),
-            content: Yup.string()
-                .required("Обязательное поле"),
-            tag: Yup.string()
-                .required("Обязательное поле"),
-        }),
-        onSubmit: (values) => {
-            mutation.mutate(values);
+            queryClient.invalidateQueries({ queryKey: ['notes'] });
+            onSuccess();
         },
     });
 
     return (
-        <form className={css.form} onSubmit={formik.handleSubmit}>
-            <div className={css.field}>
-                <label htmlFor="title">Заголовок</label>
-                <input
-                    id="title"
-                    name="title"
-                    type="text"
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    value={formik.values.title}
-                />
-                {formik.touched.title && formik.errors.title ? (
-                    <div className={css.error}>{formik.errors.title}</div>
-                ) : null}
-            </div>
-
-            <div className={css.field}>
-                <label htmlFor="content">Содержание</label>
-                <textarea
-                    id="content"
-                    name="content"
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    value={formik.values.content}
-                />
-                {formik.touched.content && formik.errors.content ? (
-                    <div className={css.error}>{formik.errors.content}</div>
-                ) : null}
-            </div>
-
-            <div className={css.field}>
-                <label htmlFor="tag">Тег</label>
-                <select
-                    id="tag"
-                    name="tag"
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    value={formik.values.tag}
-                >
-                    <option value="general">General</option>
-                    <option value="work">Work</option>
-                    <option value="personal">Personal</option>
-                </select>
-                {formik.touched.tag && formik.errors.tag ? (
-                    <div className={css.error}>{formik.errors.tag}</div>
-                ) : null}
-            </div>
-
-            <div className={css.actions}>
-                <button type="submit" disabled={mutation.isLoading}>
-                    {mutation.isLoading ? "Сохраняем..." : "Сохранить"}
-                </button>
-                <button type="button" onClick={onClose}>Отмена</button>
-            </div>
-        </form>
+        <Formik
+            initialValues={{ title: '', content: '', tag: 'Todo' }}
+            validationSchema={validationSchema}
+            onSubmit={(values, { setSubmitting }) => {
+                mutation.mutate({
+                    ...values,
+                    tag: values.tag as NoteTag,
+                });
+                setSubmitting(false);
+            }}
+        >
+            {({ isSubmitting }) => (
+                <Form className={css.form}>
+                    <div className={css.formGroup}>
+                        <label htmlFor="title">Title</label>
+                        <Field id="title" name="title" className={css.input} />
+                        <ErrorMessage name="title" component="span" className={css.error} />
+                    </div>
+                    <div className={css.formGroup}>
+                        <label htmlFor="content">Content</label>
+                        <Field as="textarea" id="content" name="content" rows={8} className={css.textarea} />
+                        <ErrorMessage name="content" component="span" className={css.error} />
+                    </div>
+                    <div className={css.formGroup}>
+                        <label htmlFor="tag">Tag</label>
+                        <Field as="select" id="tag" name="tag" className={css.select}>
+                            {tags.map(tag => (
+                                <option key={tag} value={tag}>{tag}</option>
+                            ))}
+                        </Field>
+                        <ErrorMessage name="tag" component="span" className={css.error} />
+                    </div>
+                    <div className={css.actions}>
+                        <button type="button" className={css.cancelButton} onClick={onSuccess}>
+                            Cancel
+                        </button>
+                        <button type="submit" className={css.submitButton} disabled={isSubmitting}>
+                            Create note
+                        </button>
+                    </div>
+                </Form>
+            )}
+        </Formik>
     );
 }
