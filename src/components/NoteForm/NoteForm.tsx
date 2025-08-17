@@ -1,8 +1,20 @@
 import css from "./NoteForm.module.css";
+import React from "react";
 
-export default function NoteForm() {
+interface NoteFormProps {
+    onSuccess: () => void;
+}
+
+export default function NoteForm({ onSuccess }: NoteFormProps) {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        // Здесь логика создания заметки
+        // После успешного создания:
+        onSuccess();
+    };
+
     return (
-        <form className={css.form}>
+        <form className={css.form} onSubmit={handleSubmit}>
             <div className={css.formGroup}>
                 <label htmlFor="title">Title</label>
                 <input id="title" type="text" name="title" className={css.input} />
