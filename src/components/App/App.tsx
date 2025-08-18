@@ -1,65 +1,46 @@
-import React, { useState } from "react";
-import { useQuery } from "react-query";
+import { useState } from 'react';
+
 import NoteForm from '../NoteForm/NoteForm';
 import Pagination from '../Pagination/Pagination';
 
-interface Note {
-    id: number;
-    title: string;
-    content: string;
-}
+export default function App() {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showForm, setShowForm] = useState(false);
 
-interface NotesResponse {
-    notes: Note[];
-    totalPages: number;
-}
+    const totalPages = 5; // пример, можно получать из API
 
-// Функция для получения заметок с сервера
-const fetchNotes = async (page: number): Promise<NotesResponse> => {
-    const res = await fetch(`/api/notes?page=${page}`);
-    if (!res.ok) throw new Error("Failed to fetch notes");
-    return res.json();
-};
+    const handleFormClose = () => {
+        setShowForm(false);
+    };
 
-const App: React.FC = () => {
-    const [page, setPage] = useState(1);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-
-    const { data, isLoading, error } = useQuery<NotesResponse>(
-        ["notes", page],
-        () => fetchNotes(page),
-        { keepPreviousData: true }
-    );
-
-    const handleCloseForm = () => setIsFormOpen(false);
-
-    if (isLoading) return <div>Loading...</div>;
-    if (error) return <div>Error loading notes</div>;
+    const handleFormSuccess = () => {
+        setShowForm(false);
+        console.log('Note successfully created!');
+        // здесь можно делать рефреш списка заметок
+    };
 
     return (
         <div>
-            <button onClick={() => setIsFormOpen(true)}>Add Note</button>
+            <h1>NoteHub</h1>
 
-            {isFormOpen && <NoteForm onClose={handleCloseForm} />}
+            <button onClick={() => setShowForm(true)}>Create Note</button>
 
-            <ul>
-                {data?.notes.map((note) => (
-                    <li key={note.id}>
-                        <h3>{note.title}</h3>
-                        <p>{note.content}</p>
-                    </li>
-                ))}
-            </ul>
-
-            {data && (
-                <Pagination
-                    currentPage={page}
-                    onPageChange={setPage}
-                    totalPages={data.totalPages}
+            {showForm && (
+                <NoteForm
+                    onClose={handleFormClose}   // безопасно закрываем форму
+                    onSuccess={handleFormSuccess} // вызываем после успешного создания
                 />
             )}
+
+            {/* Здесь будет список заметок */}
+            <div>Список заметок...</div>
+
+            {/* Пагинация */}
+            <Pagination
+                page={currentPage}        // текущая страница
+                setPage={setCurrentPage}  // функция для смены страницы
+                totalPages={totalPages}   // общее количество страниц
+            />
         </div>
     );
-};
-
-export default App;
+}
