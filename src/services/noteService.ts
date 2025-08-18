@@ -1,7 +1,7 @@
 import axios, { type AxiosResponse } from 'axios';
 import { type Note, type NoteTag } from '../types/note';
 
-const API_URL = 'https://notehub-public.goit.study/api/notes';
+const API_URL = 'https://notehub-public.goit.study/api';
 
 const axiosInstance = axios.create({
     baseURL: API_URL,
