@@ -1,7 +1,8 @@
 // src/services/noteService.ts
 
 import axios from 'axios';
-import { Note } from '../types/note';
+import type { Note } from '../types/note';
+
 
 const API_URL = 'https://notehub-public.goit.study/api/notes';
 const TOKEN = import.meta.env.VITE_NOTEHUB_TOKEN;
