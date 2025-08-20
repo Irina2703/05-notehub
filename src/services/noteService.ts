@@ -1,5 +1,4 @@
 import axios, { type AxiosResponse } from 'axios';
-
 import type { Note, CreateNotePayload } from '../types/note';
 
 const BASE_URL = 'https://notehub-public.goit.study/api';
@@ -22,9 +21,6 @@ export interface FetchNotesParams {
 export interface FetchNotesResponse {
     notes: Note[];
     totalPages: number;
-    totalNotes: number;
-    currentPage: number;
-    perPage: number;
 }
 
 export interface CreateNoteResponse {
@@ -35,7 +31,9 @@ export interface DeleteNoteResponse {
     note: Note;
 }
 
-export const fetchNotes = async (params: FetchNotesParams = {}): Promise<FetchNotesResponse> => {
+export const fetchNotes = async (
+    params: FetchNotesParams = {}
+): Promise<FetchNotesResponse> => {
     const { page = 1, perPage = 12, search } = params;
 
     const queryParams = new URLSearchParams({
@@ -43,7 +41,7 @@ export const fetchNotes = async (params: FetchNotesParams = {}): Promise<FetchNo
         perPage: perPage.toString(),
     });
 
-    if (search && search.trim() !== '') {
+    if (search?.trim()) {
         queryParams.append('search', search);
     }
 
